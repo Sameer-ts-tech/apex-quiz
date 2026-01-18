@@ -3,6 +3,8 @@ import connectDB from "@/lib/db";
 import User, { UserRole } from "@/models/User";
 import { User as UserIcon, Mail, Calendar } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 async function getCoaches() {
     await connectDB();
     const coaches = await User.find({ role: UserRole.COACH, status: 'APPROVED' }).sort({ createdAt: -1 });
