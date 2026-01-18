@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Loader2, DollarSign, Unlock,IndianRupee } from 'lucide-react';
+import { Loader2, DollarSign, Unlock, IndianRupee } from 'lucide-react';
 
 interface Quiz {
     _id: string;
@@ -80,7 +80,7 @@ export default function AdminQuizzesPage() {
                         </div>
 
                         <Button
-                            variant={quiz.isPaid ? "secondary" : "default"}
+                            variant={quiz.isPaid ? "secondary" : "primary"}
                             onClick={() => togglePaidStatus(quiz._id, quiz.isPaid)}
                             className="w-32 border"
                         >

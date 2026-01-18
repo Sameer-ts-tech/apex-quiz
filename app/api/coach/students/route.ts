@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import connectDB from '@/lib/db';
 import User, { UserRole } from '@/models/User';
 import bcrypt from 'bcryptjs';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     try {
         const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
         if (!token || token.role !== UserRole.COACH) {

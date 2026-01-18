@@ -111,7 +111,7 @@ export default function QuizzesPage() {
                                     </div>
                                     <div className="flex items-center space-x-3">
                                         <Button
-                                            variant={quiz.isActive ? "outline" : "default"}
+                                            variant={quiz.isActive ? "outline" : "primary"}
                                             size="sm"
                                             onClick={() => toggleStatus(quiz._id, quiz.isActive)}
                                             className={quiz.isActive ? "text-red-600 border-red-200 hover:bg-red-50" : "bg-green-600 hover:bg-green-700"}

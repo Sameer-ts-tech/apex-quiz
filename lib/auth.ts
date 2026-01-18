@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
 
                 const user = await User.findOne({ email: credentials.email }).select("+password");
 
-                if (!user) {
+                if (!user || !user.password) {
                     throw new Error("Invalid email or password");
                 }
 
@@ -48,11 +48,12 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                console.log("JWT Callback - User:", user.email, "Role:", user.role, "Status:", user.status);
-                token.role = user.role;
-                token.id = user.id;
-                token.coachingId = user.coachingId;
-                token.status = user.status;
+                const u = user as any;
+                console.log("JWT Callback - User:", u.email, "Role:", u.role, "Status:", u.status);
+                token.role = u.role;
+                token.id = u.id;
+                token.coachingId = u.coachingId;
+                token.status = u.status;
             }
             return token;
         },
@@ -60,8 +61,8 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.role = token.role as UserRole;
                 session.user.id = token.id as string;
-                session.user.coachingId = token.coachingId as string;
-                session.user.status = token.status as string;
+                (session.user as any).coachingId = token.coachingId as string;
+                (session.user as any).status = token.status as string;
             }
             return session;
         },

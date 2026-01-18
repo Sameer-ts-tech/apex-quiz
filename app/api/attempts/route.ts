@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
@@ -7,7 +7,7 @@ import Quiz from "@/models/Quiz";
 import Question from "@/models/Question";
 import { UserRole } from "@/models/User";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session || session.user.role !== UserRole.STUDENT) {
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
             // Check if selected option is correct
             // Assuming selectedOptionId is the _id of the option
-            const isCorrect = correctOption && correctOption._id.toString() === ans.selectedOptionId;
+            const isCorrect = correctOption && String((correctOption as any)._id) === String(ans.selectedOptionId);
 
             // Get score for this question from Quiz config
             const quizQuestionConfig = quiz.questions.find((qq: any) => qq.questionId.toString() === question._id.toString());
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     // Return attempts for the current user
     try {
         const session = await getServerSession(authOptions);

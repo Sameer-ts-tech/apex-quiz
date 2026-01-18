@@ -107,8 +107,8 @@ export async function GET(req: Request) {
         }
         // If student, show only quizzes created by their coach
         else if (session.user.role === UserRole.STUDENT) {
-            if (session.user.coachingId) {
-                query = { isActive: true, createdBy: session.user.coachingId };
+            if ((session.user as any).coachingId) {
+                query = { isActive: true, createdBy: (session.user as any).coachingId };
             } else {
                 // If no coachingId (legacy or error), maybe show nothing or public quizzes? 
                 // For strict isolation, show nothing.

@@ -1,12 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Lock, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PaymentRequiredPage() {
+function PaymentContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const quizTitle = searchParams.get('title') || 'Premium Quiz';
@@ -48,5 +49,17 @@ export default function PaymentRequiredPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function PaymentRequiredPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+            </div>
+        }>
+            <PaymentContent />
+        </Suspense>
     );
 }

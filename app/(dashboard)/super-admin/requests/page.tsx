@@ -94,7 +94,7 @@ export default function RequestsPage() {
                                 <div className="flex space-x-2">
                                     <Button
                                         size="sm"
-                                        variant="default"
+                                        variant="primary"
                                         className="bg-green-600 hover:bg-green-700"
                                         onClick={() => handleAction(req._id, 'APPROVED')}
                                         isLoading={processingId === req._id}

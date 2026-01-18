@@ -5,7 +5,7 @@ import connectDB from "@/lib/db";
 import Attempt from "@/models/Attempt";
 import { UserRole } from "@/models/User";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
         if (!session) {
