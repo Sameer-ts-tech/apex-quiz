@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
@@ -41,7 +42,25 @@ export async function GET(req: Request) {
 
         await connectDB();
 
-        const categories = await Category.find({ createdBy: session.user.id }).sort({ createdAt: -1 });
+        const categories = await Category.aggregate([
+            { $match: { createdBy: new mongoose.Types.ObjectId(session.user.id) } },
+            {
+                $lookup: {
+                    from: 'questions',
+                    localField: '_id',
+                    foreignField: 'categoryId',
+                    as: 'questions'
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    createdAt: 1,
+                    questionCount: { $size: '$questions' }
+                }
+            },
+            { $sort: { createdAt: -1 } }
+        ]);
 
         return NextResponse.json(categories);
     } catch (error) {

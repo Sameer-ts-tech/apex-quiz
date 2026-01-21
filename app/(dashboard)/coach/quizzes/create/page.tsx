@@ -23,11 +23,30 @@ export default function CreateQuizPage() {
     const [availableQuestions, setAvailableQuestions] = useState<any[]>([]);
     const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
 
+    // Random Mode State
+    const [categories, setCategories] = useState<any[]>([]);
+    const [randomCriteria, setRandomCriteria] = useState<{ categoryId: string; count: number }[]>([
+        { categoryId: '', count: 5 }
+    ]);
+
     useEffect(() => {
+        fetchCategories(); // Always fetch categories for valid display
         if (step === 2 && mode === 'MANUAL') {
             fetchQuestions();
         }
     }, [step, mode]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch('/api/categories');
+            if (res.ok) {
+                const data = await res.json();
+                setCategories(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const fetchQuestions = async () => {
         try {
@@ -49,6 +68,24 @@ export default function CreateQuizPage() {
         }
     };
 
+    // Random Mode Handlers
+    const addCriteria = () => {
+        setRandomCriteria([...randomCriteria, { categoryId: '', count: 5 }]);
+    };
+
+    const removeCriteria = (index: number) => {
+        const newCriteria = [...randomCriteria];
+        newCriteria.splice(index, 1);
+        setRandomCriteria(newCriteria);
+    };
+
+    const updateCriteria = (index: number, field: 'categoryId' | 'count', value: any) => {
+        const newCriteria = [...randomCriteria];
+        // @ts-ignore
+        newCriteria[index][field] = value;
+        setRandomCriteria(newCriteria);
+    };
+
     const handleSubmit = async () => {
         if (!title) return;
         setIsSubmitting(true);
@@ -64,9 +101,14 @@ export default function CreateQuizPage() {
             if (mode === 'MANUAL') {
                 payload.questions = selectedQuestionIds;
             } else {
-                // Random mode logic would go here (categories + count)
-                // For MVP, implementing Manual first as requested
-                payload.questions = []; // Placeholder
+                // Filter out incomplete criteria
+                const validCriteria = randomCriteria.filter(c => c.categoryId && c.count > 0);
+                if (validCriteria.length === 0) {
+                    alert("Please add at least one valid criteria (Category + Count)");
+                    setIsSubmitting(false);
+                    return;
+                }
+                payload.criteria = validCriteria;
             }
 
             const res = await fetch('/api/quizzes', {
@@ -78,9 +120,13 @@ export default function CreateQuizPage() {
             if (res.ok) {
                 router.push('/coach/quizzes');
                 router.refresh();
+            } else {
+                const errorText = await res.text();
+                alert(`Error: ${errorText}`);
             }
         } catch (error) {
             console.error(error);
+            alert("An error occurred while creating the quiz.");
         } finally {
             setIsSubmitting(false);
         }
@@ -104,7 +150,7 @@ export default function CreateQuizPage() {
                     </div>
                     <div className={`p-4 rounded-lg ${step === 2 ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-white text-gray-400'}`}>
                         <h3 className={`font-medium ${step === 2 ? 'text-blue-700' : ''}`}>2. Select Questions</h3>
-                        <p className="text-xs text-gray-400 mt-1">Add questions to quiz</p>
+                        <p className="text-xs text-gray-400 mt-1">{mode === 'MANUAL' ? 'Pick specific questions' : 'Set random criteria'}</p>
                     </div>
                 </div>
 
@@ -190,9 +236,52 @@ export default function CreateQuizPage() {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="text-center py-10">
-                                            <p className="text-gray-500">Random Generation UI Placeholder</p>
-                                            {/* Implement random criteria selection here later */}
+                                        <div className="space-y-4">
+                                            <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100 mb-4">
+                                                Define rules to randomly select questions from your categories.
+                                            </div>
+
+                                            {randomCriteria.map((criteria, index) => (
+                                                <div key={index} className="flex gap-4 items-end bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                    <div className="flex-1">
+                                                        <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
+                                                        <select
+                                                            className="w-full rounded-md border border-gray-200 p-2 text-sm"
+                                                            value={criteria.categoryId}
+                                                            onChange={(e) => updateCriteria(index, 'categoryId', e.target.value)}
+                                                        >
+                                                            <option value="">Select Category</option>
+                                                            {categories.map((c) => (
+                                                                <option key={c._id} value={c._id} disabled={c.questionCount === 0}>
+                                                                    {c.name} ({c.questionCount || 0} questions)
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="w-24">
+                                                        <label className="block text-xs font-medium text-gray-500 mb-1">Count</label>
+                                                        <Input
+                                                            type="number"
+                                                            value={criteria.count}
+                                                            onChange={(e) => updateCriteria(index, 'count', parseInt(e.target.value))}
+                                                            min={1}
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removeCriteria(index)}
+                                                        className="text-gray-400 hover:text-red-500"
+                                                        disabled={randomCriteria.length === 1}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+
+                                            <Button variant="outline" onClick={addCriteria} className="w-full border-dashed">
+                                                <Plus className="h-4 w-4 mr-2" /> Add Selection Rule
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -205,7 +294,7 @@ export default function CreateQuizPage() {
                                 <Button variant="outline" onClick={() => setStep(1)}>Previous</Button>
                             )}
                             {step === 1 ? (
-                                <Button onClick={() => setStep(2)}>Next: Select Questions</Button>
+                                <Button onClick={() => setStep(2)}>Next: Questions</Button>
                             ) : (
                                 <Button onClick={handleSubmit} disabled={isSubmitting || (mode === 'MANUAL' && selectedQuestionIds.length === 0)}>
                                     {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}

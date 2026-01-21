@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
@@ -26,12 +27,16 @@ export async function POST(req: Request) {
         let totalMarks = 0;
 
         if (mode === QuizMode.RANDOM) {
+            // console.log("Random Mode Criteria Received:", JSON.stringify(criteria));
             // criteria: [{ categoryId, count }]
             for (const item of criteria) {
+                // console.log(`Processing criteria: Category ${item.categoryId}, Count ${item.count}`);
                 const randomQuestions = await Question.aggregate([
-                    { $match: { categoryId: new Object(item.categoryId), createdBy: new Object(session.user.id) } },
+                    { $match: { categoryId: new mongoose.Types.ObjectId(item.categoryId), createdBy: new mongoose.Types.ObjectId(session.user.id) } },
                     { $sample: { size: item.count } }
                 ]);
+
+                // console.log(`Found ${randomQuestions.length} questions for category ${item.categoryId}`);
 
                 const mapped = randomQuestions.map((q: any) => ({
                     questionId: q._id,
@@ -39,6 +44,7 @@ export async function POST(req: Request) {
                 }));
                 selectedQuestions.push(...mapped);
             }
+            // console.log(`Total selected questions: ${selectedQuestions.length}`);
         } else {
             // Manual mode: questions array of ids
             // Validate questions exist and calculate score

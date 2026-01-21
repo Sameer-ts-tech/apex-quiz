@@ -2,8 +2,40 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import connectDB from "@/lib/db";
+import User, { UserRole } from "@/models/User";
+import Quiz from "@/models/Quiz";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-export default function CoachDashboard() {
+async function getStats() {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== UserRole.COACH) {
+        return {
+            activeStudents: 0,
+            totalQuizzes: 0,
+        };
+    }
+
+    await connectDB();
+    const activeStudents = await User.countDocuments({
+        coachingId: session.user.id,
+        role: UserRole.STUDENT
+    });
+
+    const totalQuizzes = await Quiz.countDocuments({
+        createdBy: session.user.id
+    });
+
+    return {
+        activeStudents,
+        totalQuizzes
+    };
+}
+
+export default async function CoachDashboard() {
+    const stats = await getStats();
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -21,7 +53,7 @@ export default function CoachDashboard() {
                         <CardTitle className="text-sm font-medium">Active Students</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">42</div>
+                        <div className="text-2xl font-bold">{stats.activeStudents}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -29,7 +61,7 @@ export default function CoachDashboard() {
                         <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">7</div>
+                        <div className="text-2xl font-bold">{stats.totalQuizzes}</div>
                     </CardContent>
                 </Card>
             </div>
